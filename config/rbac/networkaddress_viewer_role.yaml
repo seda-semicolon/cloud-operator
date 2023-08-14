@@ -1,0 +1,27 @@
+# permissions for end users to view networkaddresses.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: networkaddress-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: cluster-provisioner
+    app.kubernetes.io/part-of: cluster-provisioner
+    app.kubernetes.io/managed-by: kustomize
+  name: networkaddress-viewer-role
+rules:
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddresses/status
+  verbs:
+  - get

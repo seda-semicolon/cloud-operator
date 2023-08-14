@@ -1,0 +1,12 @@
+apiVersion: cloud.seda.club/v1beta1
+kind: CloudCluster
+metadata:
+  labels:
+    app.kubernetes.io/name: cloudcluster
+    app.kubernetes.io/instance: cloudcluster-sample
+    app.kubernetes.io/part-of: cluster-provisioner
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: cluster-provisioner
+  name: cloudcluster-sample
+spec:
+  # TODO(user): Add fields here

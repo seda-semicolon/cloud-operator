@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: controller-vcluster-test2
+spec:
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+          app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: controller-vcluster-test2
+spec:
+  selector:
+    app: whoami
+  type: LoadBalancer
+  ports:
+    - name: http-lol
+      port: 80
+      targetPort: 80
+---
+apiVersion: cloud.seda.club/v1beta1
+kind: NetworkAddressBinding
+metadata:
+  name: whoami-bind
+  namespace: controller-vcluster-test2
+spec:
+  networkAddress: gimmeall
+  address: whoami.seda.club
+  service: whoami
+  connectionProvider: dns

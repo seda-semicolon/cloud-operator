@@ -1,0 +1,91 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - cloudclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - cloudclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - cloudclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddressbindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddressbindings/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddressbindings/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddresses/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.seda.club
+  resources:
+  - networkaddresses/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch

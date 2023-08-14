@@ -1,0 +1,14 @@
+
+apiVersion: cloud.seda.club/v1beta1
+kind: NetworkAddress
+metadata:
+  name: gimmeall
+  namespace: controller-vcluster-test2
+spec:
+  type: domain
+  address: '**.seda.club'
+  allowedHttpPorts: '0-65525'
+  allowedTlsPorts: '0-65525'
+  allowedForwardPorts: '0-65525'
+  externalDns: true
+  allowRPI: true

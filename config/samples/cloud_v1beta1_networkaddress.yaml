@@ -1,0 +1,12 @@
+apiVersion: cloud.seda.club/v1beta1
+kind: NetworkAddress
+metadata:
+  labels:
+    app.kubernetes.io/name: networkaddress
+    app.kubernetes.io/instance: networkaddress-sample
+    app.kubernetes.io/part-of: cluster-provisioner
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: cluster-provisioner
+  name: networkaddress-sample
+spec:
+  # TODO(user): Add fields here

@@ -1,0 +1,82 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.12.0
+  name: cloudclusters.cloud.seda.club
+spec:
+  group: cloud.seda.club
+  names:
+    kind: CloudCluster
+    listKind: CloudClusterList
+    plural: cloudclusters
+    singular: cloudcluster
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: CloudCluster is the Schema for the cloudclusters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudClusterSpec defines the desired state of CloudCluster
+            properties:
+              admin:
+                default: false
+                type: boolean
+              exposeAllNodes:
+                default: false
+                type: boolean
+              exposeNodes:
+                default: false
+                type: boolean
+              internalScheduler:
+                default: false
+                type: boolean
+              projectId:
+                type: string
+            required:
+            - admin
+            - exposeAllNodes
+            - exposeNodes
+            - internalScheduler
+            - projectId
+            type: object
+          status:
+            description: CloudClusterStatus defines the observed state of CloudCluster
+            properties:
+              clusterName:
+                nullable: true
+                type: string
+              keycloakSecret:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                nullable: true
+                type: string
+              keyclockClientId:
+                nullable: true
+                type: string
+            required:
+            - clusterName
+            - keycloakSecret
+            - keyclockClientId
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
