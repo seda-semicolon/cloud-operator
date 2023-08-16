@@ -339,7 +339,7 @@ func (r *NetworkAddressBindingReconciler) ReconcileHTTP(ctx context.Context, net
 	r.CheckDomainValidity(ctx, networkAddressBinding, networkAddress, false)
 
 	if err := r.CheckPortValidity(ctx, networkAddressBinding, service, networkAddress.Spec.AllowedHTTPPorts, func(port v1.ServicePort) bool {
-		return strings.HasPrefix(port.Name, "http-")
+		return strings.HasPrefix(port.Name, "http")
 	}); err != nil {
 		return err
 	}
@@ -354,7 +354,7 @@ func (r *NetworkAddressBindingReconciler) ReconcileHTTP(ctx context.Context, net
 	toBe := map[string]*gatewayapiv1alpha2.HTTPRoute{}
 
 	for _, port := range service.Spec.Ports {
-		if !strings.HasPrefix(port.Name, "http-") {
+		if !strings.HasPrefix(port.Name, "http") {
 			continue
 		}
 		portNum := gatewayapiv1alpha2.PortNumber(port.Port)
@@ -417,7 +417,7 @@ func (r *NetworkAddressBindingReconciler) ReconcilePortForward(ctx context.Conte
 	r.CheckDomainValidity(ctx, networkAddressBinding, networkAddress, false)
 
 	if err := r.CheckPortValidity(ctx, networkAddressBinding, service, networkAddress.Spec.AllowedForwardPorts, func(port v1.ServicePort) bool {
-		return strings.HasPrefix(port.Name, "tcp-")
+		return strings.HasPrefix(port.Name, "tcp")
 	}); err != nil {
 		return err
 	}
@@ -432,7 +432,7 @@ func (r *NetworkAddressBindingReconciler) ReconcilePortForward(ctx context.Conte
 	toBe := map[string]*gatewayapiv1alpha2.TCPRoute{}
 
 	for _, port := range service.Spec.Ports {
-		if !strings.HasPrefix(port.Name, "tcp-") {
+		if !strings.HasPrefix(port.Name, "tcp") {
 			continue
 		}
 		portNum := gatewayapiv1alpha2.PortNumber(port.Port)
@@ -490,7 +490,7 @@ func (r *NetworkAddressBindingReconciler) ReconcileTLSPassthrough(ctx context.Co
 	r.CheckDomainValidity(ctx, networkAddressBinding, networkAddress, false)
 
 	if err := r.CheckPortValidity(ctx, networkAddressBinding, service, networkAddress.Spec.AllowedTLSPorts, func(port v1.ServicePort) bool {
-		return strings.HasPrefix(port.Name, "tls-")
+		return strings.HasPrefix(port.Name, "tls") || strings.HasPrefix(port.Name, "https")
 	}); err != nil {
 		return err
 	}
@@ -505,7 +505,7 @@ func (r *NetworkAddressBindingReconciler) ReconcileTLSPassthrough(ctx context.Co
 	toBe := map[string]*gatewayapiv1alpha2.TLSRoute{}
 
 	for _, port := range service.Spec.Ports {
-		if !strings.HasPrefix(port.Name, "tls-") {
+		if !strings.HasPrefix(port.Name, "tls") || strings.HasPrefix(port.Name, "https") {
 			continue
 		}
 		portNum := gatewayapiv1alpha2.PortNumber(port.Port)

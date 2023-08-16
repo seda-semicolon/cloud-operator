@@ -65,13 +65,46 @@ sync:
   priorityclasses:
     enabled: false
   networkpolicies:
-    enabled: false
+    enabled: true
   volumesnapshots:
     enabled: false
   poddisruptionbudgets:
     enabled: false
   serviceaccounts:
     enabled: false
+  generic:
+    clusterRole:
+      extraRules:
+        - apiGroups: ["apiextensions.k8s.io"]
+          resources: ["customresourcedefinitions"]
+          verbs: ["get", "list", "watch"]
+    role:
+      extraRules:
+        - apiGroups: ["cert-manager.io"]
+          resources: ["issuers", "certificates", "certificaterequests"]
+          verbs: ["create", "delete", "patch", "update", "get", "list", "watch"]
+        - apiGroups: ["cloud.seda.club/v1beta1"]
+          resources: ["NetworkAddressBinding"]
+          verbs: ["create", "delete", "patch", "update", "get", "list", "watch"]
+        - apiGroups: ["cloud.seda.club/v1beta1"]
+          resources: ["NetworkAddress"]
+          verbs: ["get", "list", "watch"]
+    config: |-
+      version: v1beta1
+      export: 
+        - apiVersion: cloud.seda.club/v1beta1
+          kind: NetworkAddressBinding
+        - apiVersion: cert-manager.io/v1
+          kind: Certificate
+          patches:
+            - op: rewriteName
+              path: spec.secretName
+      import:
+        - apiVersion: cloud.seda.club/v1beta1
+          kind: NetworkAddress
+        - kind: Secret
+          apiVersion: v1
+      
 
 # Map Services between host and virtual cluster
 mapServices:
