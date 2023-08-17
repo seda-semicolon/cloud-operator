@@ -1,2 +1,23 @@
 resources:
 - manager.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: controller
+  newName: ghcr.io/semicolon-cloud/cloud-operator
+  newTag: v0.0.1
+
+secretGenerator:
+- envs:
+  - .env.keycloak
+  name: keycloak-cred
+- envs:
+  - .env.cloudflare
+  name: cloudflare-cred
+configMapGenerator:
+- files:
+  - resources/vcluster.yaml
+  name: cluster-provisioner-resources
+- envs:
+  - .env.config
+  name: cluster-provisioner-config

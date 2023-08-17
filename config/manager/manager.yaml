@@ -89,6 +89,19 @@ spec:
             port: 8081
           initialDelaySeconds: 5
           periodSeconds: 10
+        envFrom:
+        - secretRef:
+            name: keycloak-cred
+        - secretRef:
+            name: cloudflare-cred
+        - configMapRef:
+            name: cluster-provisioner-config
+        env:
+        - name: CONFIG_DIR
+          value: /etc/config
+        volumeMounts:
+        - name: cluster-provisioner-resources
+          mountPath: /etc/config
         # TODO(user): Configure the resources accordingly based on the project requirements.
         # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         resources:
@@ -100,3 +113,9 @@ spec:
             memory: 64Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cluster-provisioner-resources
+        configMap:
+          # Provide the name of the ConfigMap containing the files you want
+          # to add to the container
+          name: cluster-provisioner-resources

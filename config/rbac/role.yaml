@@ -5,6 +5,18 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - secret
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - cloud.seda.club
   resources:
   - cloudclusters
@@ -89,3 +101,63 @@ rules:
   verbs:
   - create
   - patch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproute
+  - tcproute
+  - tlsroute
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - gateway.networking.k8s.io
+  resources:
+  - httproute/status
+  - tcproute/status
+  - tlsroute/status
+  verbs:
+  - get
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - Cluster
+  - VCluster
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - Cluster/status
+  - VCluster/status
+  verbs:
+  - get
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - tunnelbinding
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.cfargotunnel.com
+  resources:
+  - tunnelbinding/status
+  verbs:
+  - get

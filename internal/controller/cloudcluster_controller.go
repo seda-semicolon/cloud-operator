@@ -44,7 +44,8 @@ type CloudClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:resources=Secret,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secret,verbs=get;list;watch;create;update;patch;delete
+
 func (r *CloudClusterReconciler) CreateKeycloakAccount(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
 	realm := os.Getenv(("KEYCLOAK_REALM"))
@@ -138,8 +139,9 @@ func (r *CloudClusterReconciler) CreateKeycloakAccount(ctx context.Context, clus
 	return nil
 }
 
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster;Cluster,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster/status;Cluster/status,verbs=get
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster;Cluster,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster/status;Cluster/status,verbs=get
+
 func (r *CloudClusterReconciler) ProvisionVCluster(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
 

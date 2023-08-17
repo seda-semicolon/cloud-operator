@@ -47,8 +47,9 @@ type NetworkAddressBindingReconciler struct {
 	Recorder record.EventRecorder
 }
 
-// +kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbinding,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbinding/status,verbs=get
+//+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbinding,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbinding/status,verbs=get
+
 func (r *NetworkAddressBindingReconciler) CheckDomainValidity(ctx context.Context,
 	networkAddressBinding *cloudv1beta1.NetworkAddressBinding,
 	networkAddress *cloudv1beta1.NetworkAddress,
@@ -330,8 +331,9 @@ func syncGatewayAPI[O any, K interface {
 	return updatedResources, nil
 }
 
-// +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproute;tlsroute;httproute,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproute/status;tlsroute/status;httproute/status,verbs=get
+//+kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproute;tlsroute;httproute,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproute/status;tlsroute/status;httproute/status,verbs=get
+
 func (r *NetworkAddressBindingReconciler) ReconcileHTTP(ctx context.Context, networkAddressBinding *cloudv1beta1.NetworkAddressBinding, networkAddress *cloudv1beta1.NetworkAddress, service *v1.Service) error {
 	networkAddressBinding.Status.IsValid = true
 
