@@ -44,6 +44,7 @@ type CloudClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+// +kubebuilder:rbac:resources=Secret,verbs=get;list;watch;create;update;patch;delete
 func (r *CloudClusterReconciler) CreateKeycloakAccount(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
 	realm := os.Getenv(("KEYCLOAK_REALM"))
@@ -137,6 +138,8 @@ func (r *CloudClusterReconciler) CreateKeycloakAccount(ctx context.Context, clus
 	return nil
 }
 
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster;Cluster,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster/status;Cluster/status,verbs=get
 func (r *CloudClusterReconciler) ProvisionVCluster(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
 
@@ -255,6 +258,71 @@ func (r *CloudClusterReconciler) ProvisionVCluster(ctx context.Context, cluster 
 	return nil
 }
 
+func (r *CloudClusterReconciler) ProvisionTLSTunnel(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
+	if cluster.Status.AddressName == nil {
+		port := "6443"
+		addr := cloudv1beta1.NetworkAddress{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "clusterplane-" + cluster.Name,
+				Namespace: cluster.Namespace,
+			},
+			Spec: cloudv1beta1.NetworkAddressSpec{
+				Type:            "domain",
+				Address:         cluster.Name + "." + cluster.Spec.ProjectID + ".kubernetes.cloud.seda.club",
+				AllowedTLSPorts: &port,
+				ExternalAddress: true,
+				AllowGateway:    true,
+			},
+		}
+		cluster.Status.AddressName = &addr.Name
+		if err := r.Create(ctx, &addr); err != nil {
+			if errors.IsAlreadyExists(err) {
+				return nil
+			}
+			return err
+		}
+	} else {
+		var addr cloudv1beta1.NetworkAddress
+		if err := r.Get(ctx, types.NamespacedName{Name: *cluster.Status.AddressName, Namespace: cluster.Namespace}, &addr); err != nil {
+			if errors.IsNotFound(err) {
+				cluster.Status.AddressName = nil
+			}
+			return err
+		}
+	}
+
+	if cluster.Status.BindingName == nil {
+		addr := cloudv1beta1.NetworkAddressBinding{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "clusterplane-" + cluster.Name,
+				Namespace: cluster.Namespace,
+			},
+			Spec: cloudv1beta1.NetworkAddressBindingSpec{
+				NetworkAddressGrant: *cluster.Status.AddressName,
+				Address:             cluster.Name + "." + cluster.Spec.ProjectID + ".kubernetes.cloud.seda.club",
+				ServiceName:         *cluster.Status.ClusterName,
+				ConnectionProvider:  "tls-passthrough",
+			},
+		}
+		cluster.Status.BindingName = &addr.Name
+		if err := r.Create(ctx, &addr); err != nil {
+			if errors.IsAlreadyExists(err) {
+				return nil
+			}
+			return err
+		}
+	} else {
+		var binding cloudv1beta1.NetworkAddressBinding
+		if err := r.Get(ctx, types.NamespacedName{Name: *cluster.Status.BindingName, Namespace: cluster.Namespace}, &binding); err != nil {
+			if errors.IsNotFound(err) {
+				cluster.Status.BindingName = nil
+			}
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *CloudClusterReconciler) deleteExternalResources(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
 	if cluster.Status.KeycloakClientID != nil {
@@ -344,6 +412,47 @@ func (r *CloudClusterReconciler) deleteExternalResources(ctx context.Context, cl
 		}
 
 		cluster.Status.ClusterName = nil
+	}
+
+	if cluster.Status.BindingName != nil {
+		var binding cloudv1beta1.NetworkAddressBinding
+		notExist := false
+		if err := r.Get(ctx, types.NamespacedName{Name: *cluster.Status.BindingName, Namespace: cluster.Namespace}, &binding); err != nil {
+			if errors.IsNotFound(err) {
+				notExist = true
+			} else {
+				log.Error(err, "An error occured while getting secret")
+				return client.IgnoreNotFound(err)
+			}
+		}
+		if !notExist {
+			if err := r.Delete(ctx, &binding); err != nil {
+				log.Error(err, "An error occured while deleting secret")
+				return err
+			}
+
+			cluster.Status.BindingName = nil
+		}
+	}
+	if cluster.Status.AddressName != nil {
+		var address cloudv1beta1.NetworkAddress
+		notExist := false
+		if err := r.Get(ctx, types.NamespacedName{Name: *cluster.Status.BindingName, Namespace: cluster.Namespace}, &address); err != nil {
+			if errors.IsNotFound(err) {
+				notExist = true
+			} else {
+				log.Error(err, "An error occured while getting secret")
+				return client.IgnoreNotFound(err)
+			}
+		}
+		if !notExist {
+			if err := r.Delete(ctx, &address); err != nil {
+				log.Error(err, "An error occured while deleting secret")
+				return err
+			}
+
+			cluster.Status.AddressName = nil
+		}
 	}
 
 	return nil
@@ -461,6 +570,10 @@ func (r *CloudClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if err := r.ProvisionVCluster(ctx, &cluster); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if err := r.ProvisionTLSTunnel(ctx, &cluster); err != nil {
 		return ctrl.Result{}, err
 	}
 

@@ -58,6 +58,10 @@ spec:
           status:
             description: CloudClusterStatus defines the observed state of CloudCluster
             properties:
+              addressName:
+                type: string
+              bindingName:
+                type: string
               clusterName:
                 nullable: true
                 type: string
@@ -71,6 +75,8 @@ spec:
                 nullable: true
                 type: string
             required:
+            - addressName
+            - bindingName
             - clusterName
             - keycloakSecret
             - keyclockClientId

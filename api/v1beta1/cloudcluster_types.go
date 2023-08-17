@@ -56,6 +56,9 @@ type CloudClusterStatus struct {
 
 	// +nullable
 	ClusterName *string `json:"clusterName"`
+
+	AddressName *string `json:"addressName"`
+	BindingName *string `json:"bindingName"`
 }
 
 //+kubebuilder:object:generate=true
