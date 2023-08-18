@@ -59,8 +59,10 @@ spec:
             description: CloudClusterStatus defines the observed state of CloudCluster
             properties:
               addressName:
+                nullable: true
                 type: string
               bindingName:
+                nullable: true
                 type: string
               clusterName:
                 nullable: true

@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - secret
+  - secrets
   verbs:
   - create
   - delete
@@ -16,6 +16,24 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services/status
+  verbs:
+  - get
 - apiGroups:
   - cloud.seda.club
   resources:
@@ -95,6 +113,24 @@ rules:
   - patch
   - update
 - apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - clusters/status
+  verbs:
+  - get
+- apiGroups:
   - ""
   resources:
   - events
@@ -104,9 +140,9 @@ rules:
 - apiGroups:
   - gateway.networking.k8s.io
   resources:
-  - httproute
-  - tcproute
-  - tlsroute
+  - httproutes
+  - tcproutes
+  - tlsroutes
   verbs:
   - create
   - delete
@@ -118,16 +154,15 @@ rules:
 - apiGroups:
   - gateway.networking.k8s.io
   resources:
-  - httproute/status
-  - tcproute/status
-  - tlsroute/status
+  - httproutes/status
+  - tcproutes/status
+  - tlsroutes/status
   verbs:
   - get
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
-  - Cluster
-  - VCluster
+  - vclusters
   verbs:
   - create
   - delete
@@ -139,14 +174,13 @@ rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
-  - Cluster/status
-  - VCluster/status
+  - vclusters/status
   verbs:
   - get
 - apiGroups:
   - networking.cfargotunnel.com
   resources:
-  - tunnelbinding
+  - tunnelbindings
   verbs:
   - create
   - delete
@@ -158,6 +192,6 @@ rules:
 - apiGroups:
   - networking.cfargotunnel.com
   resources:
-  - tunnelbinding/status
+  - tunnelbindings/status
   verbs:
   - get

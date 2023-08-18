@@ -57,7 +57,9 @@ type CloudClusterStatus struct {
 	// +nullable
 	ClusterName *string `json:"clusterName"`
 
+	// +nullable
 	AddressName *string `json:"addressName"`
+	// +nullable
 	BindingName *string `json:"bindingName"`
 }
 

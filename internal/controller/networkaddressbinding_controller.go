@@ -47,8 +47,8 @@ type NetworkAddressBindingReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbinding,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbinding/status,verbs=get
+//+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbindings,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbindings/status,verbs=get
 
 func (r *NetworkAddressBindingReconciler) CheckDomainValidity(ctx context.Context,
 	networkAddressBinding *cloudv1beta1.NetworkAddressBinding,
@@ -74,13 +74,13 @@ func (r *NetworkAddressBindingReconciler) CheckDomainValidity(ctx context.Contex
 	}
 
 	for i := 0; i < len(grant); i++ {
-		if grant[-i] == "*" {
+		if grant[len(grant)-1-i] == "*" {
 			continue
 		}
-		if grant[-i] == "**" {
+		if grant[len(grant)-1-i] == "**" {
 			break
 		}
-		if grant[-i] != binding[-i] {
+		if grant[len(grant)-1-i] != binding[len(binding)-1-i] {
 			networkAddressBinding.Status.IsValid = false
 			r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", networkAddressBinding.Spec.Address+" is not part of "+networkAddress.Spec.Address)
 			return
@@ -331,8 +331,8 @@ func syncGatewayAPI[O any, K interface {
 	return updatedResources, nil
 }
 
-//+kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproute;tlsroute;httproute,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproute/status;tlsroute/status;httproute/status,verbs=get
+//+kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproutes;tlsroutes;httproutes,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=gateway.networking.k8s.io,resources=tcproutes/status;tlsroutes/status;httproutes/status,verbs=get
 
 func (r *NetworkAddressBindingReconciler) ReconcileHTTP(ctx context.Context, networkAddressBinding *cloudv1beta1.NetworkAddressBinding, networkAddress *cloudv1beta1.NetworkAddress, service *v1.Service) error {
 	networkAddressBinding.Status.IsValid = true
@@ -511,7 +511,7 @@ func (r *NetworkAddressBindingReconciler) ReconcileTLSPassthrough(ctx context.Co
 	toBe := map[string]*gatewayapiv1alpha2.TLSRoute{}
 
 	for _, port := range service.Spec.Ports {
-		if !strings.HasPrefix(port.Name, "tls") || strings.HasPrefix(port.Name, "https") {
+		if !(strings.HasPrefix(port.Name, "tls") || strings.HasPrefix(port.Name, "https")) {
 			continue
 		}
 		portNum := gatewayapiv1alpha2.PortNumber(port.Port)

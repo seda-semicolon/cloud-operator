@@ -128,7 +128,9 @@ mapServices:
 syncer:
   # Image to use for the syncer
   # image: loftsh/vcluster
-  extraArgs: []
+  extraArgs:
+  - --tls-san={{ .Cluster.Name }}.{{ .Cluster.Spec.ProjectID }}.kubernetes.cloud.seda.club
+  - --out-kube-config-server={{ .Cluster.Name }}.{{ .Cluster.Spec.ProjectID }}.kubernetes.cloud.seda.club
   env: []
   livenessProbe:
     enabled: true

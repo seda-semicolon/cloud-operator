@@ -44,7 +44,9 @@ type CloudClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups="",resources=secret,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=services/status,verbs=get
 
 func (r *CloudClusterReconciler) CreateKeycloakAccount(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
@@ -139,8 +141,10 @@ func (r *CloudClusterReconciler) CreateKeycloakAccount(ctx context.Context, clus
 	return nil
 }
 
-//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster;Cluster,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=VCluster/status;Cluster/status,verbs=get
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=vclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=vclusters/status,verbs=get
+//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters/status,verbs=get
 
 func (r *CloudClusterReconciler) ProvisionVCluster(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	log := log.FromContext(ctx)
@@ -262,7 +266,7 @@ func (r *CloudClusterReconciler) ProvisionVCluster(ctx context.Context, cluster 
 
 func (r *CloudClusterReconciler) ProvisionTLSTunnel(ctx context.Context, cluster *cloudv1beta1.CloudCluster) error {
 	if cluster.Status.AddressName == nil {
-		port := "6443"
+		port := "443"
 		addr := cloudv1beta1.NetworkAddress{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "clusterplane-" + cluster.Name,
@@ -572,10 +576,18 @@ func (r *CloudClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	if err := r.ProvisionVCluster(ctx, &cluster); err != nil {
+		if err := r.Client.Status().Update(ctx, &cluster); err != nil {
+			log.Error(err, "An error occured while saving CloudCluster CR")
+		}
+
 		return ctrl.Result{}, err
 	}
 
 	if err := r.ProvisionTLSTunnel(ctx, &cluster); err != nil {
+		if err := r.Client.Status().Update(ctx, &cluster); err != nil {
+			log.Error(err, "An error occured while saving CloudCluster CR")
+		}
+
 		return ctrl.Result{}, err
 	}
 
