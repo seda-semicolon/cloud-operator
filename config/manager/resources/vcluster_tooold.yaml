@@ -1,3 +1,14 @@
+# These annotations will be applied to all objects created in this chart
+globalAnnotations: {}
+
+# If the control plane is deployed in high availability mode
+# Make sure to scale up the replicas and use an external datastore
+enableHA: false
+
+# If true, will deploy vcluster in headless mode, which means no deployment
+# or statefulset is created.
+headless: false
+
 # DefaultImageRegistry will be prepended to all deployed vcluster images, such as the vcluster pod, coredns etc.. Deployed
 # images within the vcluster will not be rewritten.
 defaultImageRegistry: ""
@@ -23,23 +34,32 @@ sync:
     enabled: true
   configmaps:
     enabled: true
+    all: false
   secrets:
+    all: false
     enabled: true
   endpoints:
     enabled: true
   pods:
     enabled: true
+    ephemeralContainers: false
+    status: false
   events:
     enabled: true
   persistentvolumeclaims:
     enabled: true
   ingresses:
     enabled: false
+  ingressclasses: {}
+    # By default IngressClasses sync is enabled when the Ingress sync is enabled
+    # but it can be explicitly disabled by setting:
+    # enabled: false
   fake-nodes:
     enabled: true # will be ignored if nodes.enabled = true
   fake-persistentvolumes:
     enabled: true # will be ignored if persistentvolumes.enabled = true
   nodes:
+    fakeKubeletIPs: true
     enabled: {{ .Cluster.Spec.ExposeNodes }}
     # If nodes sync is enabled, and syncAllNodes = true, the virtual cluster 
     # will sync all nodes instead of only the ones where some pods are running.
@@ -59,19 +79,21 @@ sync:
   persistentvolumes:
     enabled: false
   storageclasses:
-    enabled: true
-  legacy-storageclasses:
+    enabled: false
+  # formerly named - "legacy-storageclasses"
+  hoststorageclasses:
     enabled: false
   priorityclasses:
     enabled: false
   networkpolicies:
-    enabled: true
+    enabled: false
   volumesnapshots:
     enabled: false
   poddisruptionbudgets:
     enabled: false
   serviceaccounts:
     enabled: false
+  # generic CRD configuration
   generic:
     clusterRole:
       extraRules:
@@ -104,7 +126,11 @@ sync:
           kind: NetworkAddress
         - kind: Secret
           apiVersion: v1
-      
+# If enabled, will fallback to host dns for resolving domains. This
+# is useful if using istio or dapr in the host cluster and sidecar
+# containers cannot connect to the central instance. Its also useful
+# if you want to access host cluster services from within the vcluster.
+fallbackHostDns: false
 
 # Map Services between host and virtual cluster
 mapServices:
@@ -124,11 +150,18 @@ mapServices:
   # also create the namespace for the service.
   fromHost: []
 
+proxy:
+  metricsServer:
+    nodes:
+      enabled: true
+    pods:
+      enabled: true
+
 # Syncer configuration
 syncer:
   # Image to use for the syncer
-  # image: loftsh/vcluster
-  extraArgs:
+  # image: ghcr.io/loft-sh/vcluster
+  extraArgs: 
   - --tls-san={{ .Cluster.Name }}.{{ .Cluster.Spec.ProjectID }}.skc.cloud.seda.club
   - --out-kube-config-server={{ .Cluster.Name }}.{{ .Cluster.Spec.ProjectID }}.skc.cloud.seda.club
   env: []
@@ -139,19 +172,24 @@ syncer:
   volumeMounts:
     - mountPath: /data
       name: data
-      readOnly: true
+      # readOnly: true
+  extraVolumeMounts: []
   resources:
     limits:
-      memory: 1Gi
+      cpu: 1000m
+      memory: 512Mi
     requests:
-      cpu: 10m
+      # ensure that cpu/memory requests are high enough.
+      # for example gke wants minimum 10m/32Mi here!
+      cpu: 20m
       memory: 64Mi
   kubeConfigContextName: "my-vcluster"
+  serviceAnnotations: {}
 
 # Virtual Cluster (k3s) configuration
 vcluster:
   # Image to use for the virtual cluster
-  image: rancher/k3s:v1.24.1-rc1-k3s1
+  image: rancher/k3s:v1.26.0-k3s1
   command:
     - /bin/k3s
   baseArgs:
@@ -165,11 +203,6 @@ vcluster:
     - --flannel-backend=none
     - --kube-apiserver-arg=--oidc-issuer-url='{{ .KeycloakBaseUrl }}/realms/{{ .KeycloakRealm}}'
     - --kube-apiserver-arg=--oidc-client-id={{ .ClientID }}
-  # Extra arguments for k3s. Make sure the service-cidr is the exact service cidr of the host cluster.
-  # If this does not match, you won't be able to create services within the vcluster. You can find out
-  # the service cidr of the host cluster by creating a service with a not allowed ClusterIP in the host cluster.
-  # This will yield an error message in the form of: 
-  # The Service "faulty-service" is invalid: spec.clusterIP: Invalid value: "1.1.1.1": provided IP is not in the valid range. The range of valid IPs is 10.96.0.0/12
   extraArgs: []
   volumeMounts:
     - mountPath: /data
@@ -192,7 +225,7 @@ storage:
   # Optional StorageClass used for the pvc
   # if empty default StorageClass defined in your host cluster will be used
   #className:
-  
+
 # Extra volumes that should be created for the StatefulSet
 volumes: []
 
@@ -201,11 +234,19 @@ serviceAccount:
   create: true
   # Optional name of the service account to use
   # name: default
+  # Optional pull secrets
+  # imagePullSecrets:
+  #   - name: my-pull-secret
+
+# Service account that should be used by the pods synced by vcluster
+workloadServiceAccount:
+  # This is not supported in multi-namespace mode
+  annotations: {}
 
 # Roles & ClusterRoles for the vcluster
 rbac:
   clusterRole:
-    # Deprecated ! 
+    # Deprecated !
     # Necessary cluster roles are created based on the enabled syncers (.sync.*.enabled)
     # Support for this value will be removed in a future version of the vcluster
     create: false
@@ -214,7 +255,7 @@ rbac:
     # Support for this value will be removed in a future version of the vcluster
     # and basic role will always be created
     create: true
-    # Deprecated ! 
+    # Deprecated !
     # Necessary extended roles are created based on the enabled syncers (.sync.*.enabled)
     # Support for this value will be removed in a future version of the vcluster
     extended: false
@@ -236,18 +277,51 @@ tolerations: []
 
 # Extra Labels for the stateful set
 labels: {}
+podLabels: {}
 
 # Extra Annotations for the stateful set
 annotations: {}
+podAnnotations: {}
+
+# PodDisruptionBudget settings for the vcluster
+# (takes effect only if high availability mode is enabled and more than one replica is created)
+podDisruptionBudget:
+  # Controls wether a PodDisruptionBudget will be created
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# k3s token settings for the vcluster
+# (take effect only if high availability mode is enabled)
+serverToken:
+  # Shared secret used to join a k3s server to the cluster. If empty, a random token value will be generated.
+  # (Note that this token is also used to generate the encryption key for important content in the database e.g., bootstrap data)
+  value: ""
+  # Reference to an existing secret key used as value for the k3s server token
+  secretKeyRef: {}
+    # name: ""
+    # key: ""
 
 # Service configurations
 service:
-  type: LoadBalancer
-  # Configuration for LoadBalancer service type
+  type: ClusterIP
+
+  # Optional configuration
+  # A list of IP addresses for which nodes in the cluster will also accept traffic for this service.
+  # These IPs are not managed by Kubernetes; e.g., an external load balancer.
   externalIPs: []
+
+  # Optional configuration for LoadBalancer & NodePort service types
+  # Route external traffic to node-local or cluster-wide endpoints [ Local | Cluster ]
   externalTrafficPolicy: ""
-  # CIDR block(s) for the service allowlist; only used when the Service type is LoadBalancer
+
+  # Optional configuration for LoadBalancer service type
+  # Specify IP of load balancer to be created
+  loadBalancerIP: ""
+  # CIDR block(s) for the service allowlist
   loadBalancerSourceRanges: []
+  # Set the loadBalancerClass if using an external load balancer controller
+  loadBalancerClass: ""
 
 # Configure the ingress resource that allows you to access the vcluster
 ingress:
@@ -280,7 +354,7 @@ securityContext:
   # runAsNonRoot: true
 
 # Set "enable" to true when running vcluster in an OpenShift host
-# This will add an extra rule to the deployed role binding in order 
+# This will add an extra rule to the deployed role binding in order
 # to manage service endpoints
 openshift:
   enable: false
@@ -308,13 +382,25 @@ coredns:
     requests:
       cpu: 3m
       memory: 16Mi
+# if below option is configured, it will override the coredns manifests with the following string
+#  manifests: |-
+#    apiVersion: ...
+#    ...
+  podAnnotations: {}
+  podLabels: {}
 
 # If enabled will deploy vcluster in an isolated mode with pod security
 # standards, limit ranges and resource quotas
 isolation:
   enabled: {{ not .Cluster.Spec.AdministrativeCluster }}
+  namespace: null
 
   podSecurityStandard: baseline
+
+  # If enabled will add node/proxy permission to the cluster role
+  # in isolation mode
+  nodeProxyPermission:
+    enabled: false
 
   resourceQuota:
     enabled: true
@@ -337,7 +423,7 @@ isolation:
     scopeSelector:
       matchExpressions:
     scopes:
-  
+
   limitRange:
     enabled: true
     default:
@@ -369,3 +455,11 @@ init:
   # this allows you to use helm values inside, e.g.: {{ .Release.Name }}
   manifestsTemplate: ''
   helm: []
+
+multiNamespaceMode:
+  enabled: false
+
+telemetry:
+  disabled: "false"
+  instanceCreator: "helm"
+  instanceCreatorUID: ""

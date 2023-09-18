@@ -50,27 +50,14 @@ type NetworkAddressBindingReconciler struct {
 //+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbindings,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=networking.cfargotunnel.com,resources=tunnelbindings/status,verbs=get
 
-func (r *NetworkAddressBindingReconciler) CheckDomainValidity(ctx context.Context,
-	networkAddressBinding *cloudv1beta1.NetworkAddressBinding,
-	networkAddress *cloudv1beta1.NetworkAddress,
-	allowWildcard bool) {
-	if !allowWildcard && strings.Contains(networkAddressBinding.Spec.Address, "*") {
-		networkAddressBinding.Status.IsValid = false
-		r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", "Wildcard Address is not available for current type : "+networkAddressBinding.Spec.Address)
-		return
-	}
-
-	var grant = strings.Split(networkAddress.Spec.Address, ".")
-	var binding = strings.Split(networkAddressBinding.Spec.Address, ".")
+func checkSingleValidity(pattern string, target string) bool {
+	var grant = strings.Split(pattern, ".")
+	var binding = strings.Split(target, ".")
 	if len(grant) > len(binding) {
-		networkAddressBinding.Status.IsValid = false
-		r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", networkAddressBinding.Spec.Address+" is not part of "+networkAddress.Spec.Address)
-		return
+		return false
 	}
 	if grant[0] != "**" && len(grant) != len(binding) {
-		networkAddressBinding.Status.IsValid = false
-		r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", networkAddressBinding.Spec.Address+" is not part of "+networkAddress.Spec.Address)
-		return
+		return false
 	}
 
 	for i := 0; i < len(grant); i++ {
@@ -81,12 +68,37 @@ func (r *NetworkAddressBindingReconciler) CheckDomainValidity(ctx context.Contex
 			break
 		}
 		if grant[len(grant)-1-i] != binding[len(binding)-1-i] {
-			networkAddressBinding.Status.IsValid = false
-			r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", networkAddressBinding.Spec.Address+" is not part of "+networkAddress.Spec.Address)
-			return
+			return false
 		}
 	}
+	return true
+}
+
+func (r *NetworkAddressBindingReconciler) CheckDomainValidity(ctx context.Context,
+	networkAddressBinding *cloudv1beta1.NetworkAddressBinding,
+	networkAddress *cloudv1beta1.NetworkAddress,
+	allowWildcard bool) {
+	if !allowWildcard && strings.Contains(networkAddressBinding.Spec.Address, "*") {
+		networkAddressBinding.Status.IsValid = false
+		r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", "Wildcard Address is not available for current type : "+networkAddressBinding.Spec.Address)
+		return
+	}
+	errorStr := ""
+	passed := false
+	for _, addr := range networkAddress.Spec.Address {
+		if !checkSingleValidity(addr, networkAddressBinding.Spec.Address) {
+			errorStr = errorStr + " / " + networkAddressBinding.Spec.Address + " is not part of " + addr
+		} else {
+			passed = true
+		}
+	}
+	if !passed {
+		networkAddressBinding.Status.IsValid = false
+		r.Recorder.Event(networkAddressBinding, "Warning", "Invalid Address", errorStr)
+		return
+	}
 	return
+
 }
 
 type PortFilter func(v1.ServicePort) bool
@@ -200,7 +212,7 @@ func (r *NetworkAddressBindingReconciler) ReconcileCloudflare(ctx context.Contex
 					Kind: "Service",
 					Name: service.Name,
 					Spec: cloudflareoperatorv1beta1.TunnelBindingSubjectSpec{
-						Fqdn: networkAddress.Spec.Address,
+						Fqdn: networkAddressBinding.Spec.Address,
 					},
 				},
 			},

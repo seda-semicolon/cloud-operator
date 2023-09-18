@@ -30,8 +30,8 @@ type NetworkAddressSpec struct {
 
 	// Foo is an examplse field of NetworkAddress. Edit networkaddress_types.go to remove/update
 	// +kubebuilder:validation:Enum=domain
-	Type    string `json:"type"`
-	Address string `json:"address"`
+	Type    string   `json:"type"`
+	Address []string `json:"address"`
 	// +nullable
 	AllowedHTTPPorts *string `json:"allowedHttpPorts,omitempty"`
 	// +nullable

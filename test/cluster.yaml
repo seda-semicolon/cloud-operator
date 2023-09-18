@@ -17,3 +17,7 @@ metadata:
 spec:
   # TODO(user): Add fields here
   projectId: team-mistake-rne
+  admin: false
+  exposeNodes: false
+  exposeAllNodes: false
+  internalScheduler: false

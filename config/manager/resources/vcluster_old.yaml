@@ -301,13 +301,7 @@ coredns:
     externalTrafficPolicy: ""
     # Extra Annotations
     annotations: {}
-  resources:
-    limits:
-      cpu: 1000m
-      memory: 170Mi
-    requests:
-      cpu: 3m
-      memory: 16Mi
+  resources: ""
 
 # If enabled will deploy vcluster in an isolated mode with pod security
 # standards, limit ranges and resource quotas

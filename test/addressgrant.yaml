@@ -2,25 +2,13 @@
 apiVersion: cloud.seda.club/v1beta1
 kind: NetworkAddress
 metadata:
-  name: chatmoja-sub
-  namespace: team-mistake-rne
-spec:
-  type: domain
-  address: '**.chatmoja.seda.club'
-  allowedHttpPorts: '0-65525'
-  allowedTlsPorts: '0-65525'
-  allowedForwardPorts: '0-65525'
-  externalDns: true
-  allowRPI: true
----
-apiVersion: cloud.seda.club/v1beta1
-kind: NetworkAddress
-metadata:
   name: chatmoja
   namespace: team-mistake-rne
 spec:
   type: domain
-  address: 'chatmoja.seda.club'
+  address: 
+  - 'chatmoja.seda.club'
+  - '**.chatmoja.seda.club'
   allowedHttpPorts: '0-65525'
   allowedTlsPorts: '0-65525'
   allowedForwardPorts: '0-65525'

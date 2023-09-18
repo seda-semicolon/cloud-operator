@@ -35,7 +35,9 @@ spec:
             description: NetworkAddressSpec defines the desired state of NetworkAddress
             properties:
               address:
-                type: string
+                items:
+                  type: string
+                type: array
               allowRPI:
                 default: true
                 type: boolean
